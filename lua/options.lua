@@ -9,3 +9,12 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99 -- Start with all folds open
 vim.opt.foldcolumn = "1" -- Shows a small column on the left to indicate folds
+
+vim.filetype.add({
+  extension = {
+    twig = "twig",
+  },
+  pattern = {
+    [".*%.html%.twig"] = "twig", -- Forces double extension to be recognized
+  },
+})
