@@ -6,6 +6,7 @@ local map = vim.keymap.set
 
 map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
+map("n", "<Tab>", "za", { desc = "Toggle fold" })
 
 -- Scroll up half a screen and then center the cursor
 vim.api.nvim_set_keymap('n', '<C-u>', '<C-u>zz', { noremap = true, silent = true, desc = 'Scroll Up Half Page and Center' })
