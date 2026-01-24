@@ -18,11 +18,14 @@ return {
     "williamboman/mason.nvim",
     opts = {
       ensure_installed = {
-        "intelephense",
-        "html",       
-        "cssls",     
+        "intelephense", "laravel-ls",
+        "html", "html-lsp", "blade-formatter",
+        "twiggy-language-server",
+        "cssls", "css-lsp", "emmet-ls",
         "tailwindcss-language-server",
-        "ts_ls",  
+        "ts_ls",
+        "typescript-language-server",
+        "vue_ls",
         "pyright",
         "lua-language-server",
       }
@@ -34,18 +37,16 @@ return {
     opts = {
       ensure_installed = {
         "lua",
-        "vim",
-        "vimdoc",
-        "php",
-        "html",
-        "css",
-        "javascript",
+        "vim", "vimdoc",
         "typescript",
-        "vue",
-        "blade",
         "python",
+        "php", "phpdoc",
+        "twig", "html", "blade",
+        "vue", "javascript",
+        "css", "scss",
+        "json", "yaml", "xml"
       },
-      higlight = {
+      highlight = {
         enable = true,
         additional_vim_regex_highlighting = false
       },
