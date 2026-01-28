@@ -18,3 +18,20 @@ vim.filetype.add({
     [".*%.html%.twig"] = "twig", -- Forces double extension to be recognized
   },
 })
+
+-- Force global indentation settings
+vim.opt.autoindent = true
+vim.opt.smartindent = true
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+
+-- Fix for PHP specifically (prevents the runtime script from overriding you)
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "php",
+  callback = function()
+    vim.opt_local.autoindent = true
+    vim.opt_local.smartindent = true
+  end,
+})

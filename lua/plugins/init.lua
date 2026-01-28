@@ -8,11 +8,10 @@ return {
   {
     "neovim/nvim-lspconfig",
     config = function()
-      require("nvchad.configs.lspconfig").defaults()
+      -- require("nvchad.configs.lspconfig").defaults()
       require "configs.lspconfig"
     end,
   },
-  
 
   {
     "williamboman/mason.nvim",
@@ -45,6 +44,9 @@ return {
         "vue", "javascript",
         "css", "scss",
         "json", "yaml", "xml"
+      },
+      indent = {
+        enable = True
       },
       highlight = {
         enable = true,
