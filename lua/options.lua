@@ -23,9 +23,9 @@ vim.filetype.add({
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 4
-vim.opt.tabstop = 4
-vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 2
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
 
 -- Fix for PHP specifically (prevents the runtime script from overriding you)
 vim.api.nvim_create_autocmd("FileType", {

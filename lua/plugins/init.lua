@@ -94,4 +94,8 @@ return {
       mode = 'cursor',          -- Line used to calculate context. Can be 'cursor' or 'topline'
     },
   },
+
+  {
+    "thomas-hiron/cmp-symfony",
+  }
 }

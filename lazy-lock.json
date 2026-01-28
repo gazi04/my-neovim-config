@@ -3,6 +3,7 @@
   "NvChad": { "branch": "v2.5", "commit": "c57b82473b821274f6017eb03582ba1d13be9d8c" },
   "base46": { "branch": "v3.0", "commit": "884b990dcdbe07520a0892da6ba3e8d202b46337" },
   "blink.cmp": { "branch": "main", "commit": "b19413d214068f316c78978b08264ed1c41830ec" },
+  "cmp-symfony": { "branch": "main", "commit": "505840932130a1030b5e5eb82e96ccbb1cdc4b3d" },
   "conform.nvim": { "branch": "master", "commit": "c2526f1cde528a66e086ab1668e996d162c75f4f" },
   "friendly-snippets": { "branch": "main", "commit": "6cd7280adead7f586db6fccbd15d2cac7e2188b9" },
   "gitsigns.nvim": { "branch": "main", "commit": "abf82a65f185bd54adc0679f74b7d6e1ada690c9" },

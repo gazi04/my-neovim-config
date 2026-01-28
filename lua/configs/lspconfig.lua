@@ -7,7 +7,8 @@ local servers = {
   "tailwindcss",
   "html",
   "cssls",
-  "emmet_ls"
+  "emmet_ls",
+  "svelte"
 }
 vim.lsp.enable(servers)
 
