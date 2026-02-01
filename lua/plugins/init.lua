@@ -37,7 +37,7 @@ return {
       ensure_installed = {
         "lua",
         "vim", "vimdoc",
-        "typescript",
+        "typescript", "svelte",
         "python",
         "php", "phpdoc",
         "twig", "html", "blade",
@@ -46,7 +46,7 @@ return {
         "json", "yaml", "xml"
       },
       indent = {
-        enable = True
+        enable = true
       },
       highlight = {
         enable = true,
