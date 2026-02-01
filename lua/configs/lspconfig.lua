@@ -7,7 +7,6 @@ local servers = {
   "tailwindcss",
   "html",
   "cssls",
-  "emmet_ls",
   "svelte"
 }
 vim.lsp.enable(servers)
@@ -35,3 +34,13 @@ vim.lsp.config['intelephense'] = {
 }
 
 vim.lsp.enable("intelephense")
+
+vim.lsp.config['svelte'] = {
+  cmd = { "svelteserver", "--stdio" },
+  filetypes = { "svelte" },
+  root_dir = function(fname)
+    return lsp_util.root_pattern("package.json", ".git")(fname)
+  end,
+}
+
+vim.lsp.enable("svelte")
