@@ -36,3 +36,17 @@ require "autocmds"
 vim.schedule(function()
   require "mappings"
 end)
+
+-- Remove padding when entering Neovim
+vim.api.nvim_create_autocmd("VimEnter", {
+    callback = function()
+        os.execute("kitty @ set-spacing padding=0")
+    end,
+})
+
+-- Restore padding when exiting Neovim
+vim.api.nvim_create_autocmd("VimLeave", {
+    callback = function()
+        os.execute("kitty @ set-spacing padding=25")
+    end,
+})
