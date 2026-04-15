@@ -1,57 +1,68 @@
-local lspconfig = require("lspconfig")
-local util = require("lspconfig.util")
+local lsp_util = require("lspconfig.util")
 
--- This function is standard for NvChad to map keys only when LSP attaches
-local on_attach = function(client, bufnr)
-  -- NvChad specific: if you have a custom on_attach in your main config, 
-  -- you might need to call it here.
-end
+-- NvChad standard integration
+local on_attach = require("nvchad.configs.lspconfig").on_attach
+local on_init = require("nvchad.configs.lspconfig").on_init
+local capabilities = require("nvchad.configs.lspconfig").capabilities
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-
--- Standard servers list
+-- 1. Standard Servers
 local servers = { "pyright", "ts_ls", "html", "cssls" }
-
 for _, lsp in ipairs(servers) do
-  lspconfig[lsp].setup {
+  vim.lsp.config(lsp, {
     on_attach = on_attach,
+    on_init = on_init,
     capabilities = capabilities,
-  }
+  })
+  vim.lsp.enable(lsp)
 end
 
--- 1. Svelte Setup
-lspconfig.svelte.setup {
+-- 2. Svelte Native Setup
+vim.lsp.config('svelte', {
   on_attach = on_attach,
   capabilities = capabilities,
   filetypes = { "svelte" },
-  root_dir = util.root_pattern("package.json", ".git"),
-}
+  root_dir = lsp_util.root_pattern("svelte.config.js", "package.json", ".git"),
+})
+vim.lsp.enable('svelte')
 
--- 2. Tailwind Setup
-lspconfig.tailwindcss.setup {
+-- 3. Tailwind Native Setup
+vim.lsp.config('tailwindcss', {
   on_attach = on_attach,
   capabilities = capabilities,
   filetypes = { "html", "css", "svelte", "javascriptreact", "typescriptreact" },
-  root_dir = util.root_pattern('tailwind.config.js', 'postcss.config.js', '.git'),
-}
+  root_dir = lsp_util.root_pattern('tailwind.config.js', 'postcss.config.js', '.git'),
+})
+vim.lsp.enable('tailwindcss')
 
--- 3. Intelephense Setup (The most important one right now)
-lspconfig.intelephense.setup {
+-- 4. Intelephense (Laravel Optimized)
+vim.lsp.config('intelephense', {
   on_attach = on_attach,
   capabilities = capabilities,
   cmd = { "intelephense", "--stdio" },
   filetypes = { "php" },
-  -- This force-returns the current directory if it can't find a root, 
-  -- just to ensure it STARTS no matter what.
   root_dir = function(fname)
-    return util.root_pattern("bin/console", "composer.json", ".git")(fname) or vim.loop.cwd()
+    -- Prioritize Laravel's 'artisan' file for root detection
+    return lsp_util.root_pattern("artisan", "composer.json", ".git")(fname) 
+           or vim.uv.cwd()
   end,
   settings = {
     intelephense = {
-      files = { maxSize = 5000000 },
+      files = { 
+        maxSize = 5000000,
+        associations = { "*.php", "*.phtml", "*.blade.php" } 
+      },
       environment = {
-        includePaths = { "vendor/**", "../../vendor/**" }
+        -- Standard Laravel vendor path
+        includePaths = { "vendor/" },
+        phpVersion = "8.2" 
+      },
+      diagnostics = {
+        enable = true,
+      },
+      completion = {
+        fullyQualifyImportedNames = true
       }
     }
   }
-}
+})
+vim.lsp.enable('intelephense')
