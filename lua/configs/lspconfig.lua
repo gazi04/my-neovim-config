@@ -36,33 +36,8 @@ vim.lsp.enable('tailwindcss')
 
 -- 4. Intelephense (Laravel Optimized)
 vim.lsp.config('intelephense', {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  cmd = { "intelephense", "--stdio" },
-  filetypes = { "php" },
-  root_dir = function(fname)
-    -- Prioritize Laravel's 'artisan' file for root detection
-    return lsp_util.root_pattern("artisan", "composer.json", ".git")(fname) 
-           or vim.uv.cwd()
-  end,
-  settings = {
-    intelephense = {
-      files = { 
-        maxSize = 5000000,
-        associations = { "*.php", "*.phtml", "*.blade.php" } 
-      },
-      environment = {
-        -- Standard Laravel vendor path
-        includePaths = { "vendor/" },
-        phpVersion = "8.2" 
-      },
-      diagnostics = {
-        enable = true,
-      },
-      completion = {
-        fullyQualifyImportedNames = true
-      }
-    }
-  }
+  cmd = { 'intelephense', '--stdio' },
+  filetypes = { 'php' },
+  root_markers = { 'composer.json', '.git' },
 })
 vim.lsp.enable('intelephense')
