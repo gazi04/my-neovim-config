@@ -33,30 +33,30 @@ return {
 
   {
     "nvim-treesitter/nvim-treesitter",
-    opts = {
-      ensure_installed = {
-        "lua",
-        "vim", "vimdoc",
-        "typescript", "svelte",
-        "python",
-        "php", "phpdoc",
-        "twig", "html", "blade",
-        "vue", "javascript",
-        "css", "scss",
-        "json", "yaml", "xml"
-      },
-      indent = {
-        enable = true
-      },
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = false
-      },
-      context_commentstring = {
-        enable = true,
-        enable_autocmd = false,
-      },
-    },
+    branch="main",
+    init = function () 
+      vim.api.nvim_create_autocmd('FileType', { 
+        callback = function() 
+          -- Enable treesitter highlighting and disable regex syntax
+          pcall(vim.treesitter.start) 
+          -- Enable treesitter-based indentation
+          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" 
+        end, 
+      }) 
+
+      local ensureInstalled = {
+        "lua", "vim", "vimdoc", "typescript", "svelte",
+        "python", "php", "phpdoc", "html", "blade",
+        "vue", "javascript", "css", "scss", "json", "yaml", "xml"
+      }
+      local alreadyInstalled = require('nvim-treesitter.config').get_installed()
+      local parsersToInstall = vim.iter(ensureInstalled)
+        :filter(function(parser)
+          return not vim.tbl_contains(alreadyInstalled, parser)
+        end)
+        :totable()
+      require('nvim-treesitter').install(parsersToInstall)
+    end
   },
   -- test new blink
   { import = "nvchad.blink.lazyspec" },
