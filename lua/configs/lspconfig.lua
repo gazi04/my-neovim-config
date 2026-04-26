@@ -6,7 +6,7 @@ local on_init = require("nvchad.configs.lspconfig").on_init
 local capabilities = require("nvchad.configs.lspconfig").capabilities
 
 -- 1. Standard Servers
-local servers = { "pyright", "ts_ls", "html", "cssls" }
+local servers = { "pyright", "clangd", "ts_ls", "html", "cssls" }
 for _, lsp in ipairs(servers) do
   vim.lsp.config(lsp, {
     on_attach = on_attach,
