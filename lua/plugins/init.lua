@@ -52,7 +52,7 @@ return {
     -- Lazy.nvim will automatically handle the setup under the hood 
     -- using your 'opts' table above, without looking for the deleted configs module!
   },
-  -- test new blink
+
   { import = "nvchad.blink.lazyspec" },
 
   {
@@ -88,8 +88,4 @@ return {
       mode = 'cursor',          -- Line used to calculate context. Can be 'cursor' or 'topline'
     },
   },
-
-  {
-    "thomas-hiron/cmp-symfony",
-  }
 }
