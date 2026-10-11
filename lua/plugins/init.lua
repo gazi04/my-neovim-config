@@ -14,19 +14,19 @@ return {
   },
 
   {
-    "williamboman/mason.nvim",
+    "mason-org/mason.nvim",
+    -- mason.nvim itself ignores this list: :MasonInstallAll (autocmds.lua)
+    -- installs whatever is missing. Use Mason package names, not lspconfig ones.
     opts = {
       ensure_installed = {
-        "intelephense", "laravel-ls",
-        "html", "html-lsp", "blade-formatter",
-        "twiggy-language-server",
-        "cssls", "css-lsp", "emmet-ls",
+        "intelephense", "laravel-ls", "phpactor", "blade-formatter",
+        "html-lsp", "css-lsp",
         "tailwindcss-language-server",
-        "ts_ls",
         "typescript-language-server",
-        "vue_ls",
+        "svelte-language-server",
+        "vue-language-server",
         "pyright",
-        "lua-language-server",
+        "lua-language-server", "stylua",
       }
     }
   },
