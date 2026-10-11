@@ -1,7 +1,8 @@
 return {
   {
     "stevearc/conform.nvim",
-    -- event = 'BufWritePre', -- uncomment for format on save
+    event = "BufWritePre", -- format on save (configs/conform.lua)
+    cmd = { "ConformInfo" },
     opts = require "configs.conform",
   },
 
@@ -19,13 +20,13 @@ return {
     -- installs whatever is missing. Use Mason package names, not lspconfig ones.
     opts = {
       ensure_installed = {
-        "intelephense", "laravel-ls", "phpactor", "blade-formatter",
-        "html-lsp", "css-lsp",
+        "intelephense", "laravel-ls", "blade-formatter",
+        "html-lsp", "css-lsp", "prettierd",
         "tailwindcss-language-server",
         "typescript-language-server",
         "svelte-language-server",
         "vue-language-server",
-        "pyright",
+        "pyright", "ruff",
         "lua-language-server", "stylua",
         "arduino-language-server",
       }

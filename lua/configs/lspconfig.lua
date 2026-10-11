@@ -11,7 +11,7 @@ local on_init = nvlsp.on_init
 local capabilities = nvlsp.capabilities
 
 -- 1. Standard Servers
-local servers = { "pyright", "clangd", "ts_ls", "html", "cssls" }
+local servers = { "clangd", "html", "cssls" }
 for _, lsp in ipairs(servers) do
   vim.lsp.config(lsp, {
     on_attach = on_attach,
@@ -20,6 +20,84 @@ for _, lsp in ipairs(servers) do
   })
   vim.lsp.enable(lsp)
 end
+
+-- TypeScript + Vue
+-- vue_ls only handles the template/style parts; it forwards the TypeScript
+-- work to ts_ls, which needs the @vue/typescript-plugin and the vue filetype.
+local vue_plugin = {
+  name = "@vue/typescript-plugin",
+  location = vim.fn.stdpath("data") .. "/mason/packages/vue-language-server/node_modules/@vue/language-server",
+  languages = { "vue" },
+  configNamespace = "typescript",
+}
+vim.lsp.config('ts_ls', {
+  on_attach = on_attach,
+  on_init = on_init,
+  capabilities = capabilities,
+  init_options = { plugins = { vue_plugin } },
+  filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
+})
+vim.lsp.enable('ts_ls')
+
+-- No on_init here: vue_ls's own on_init wires the request forwarding to ts_ls
+vim.lsp.config('vue_ls', {
+  on_attach = on_attach,
+  capabilities = capabilities,
+})
+vim.lsp.enable('vue_ls')
+
+-- Laravel: routes, views, config, env and translation keys (starts only in
+-- projects with an `artisan` file, alongside intelephense)
+vim.lsp.config('laravel_ls', {
+  on_attach = on_attach,
+  on_init = on_init,
+  capabilities = capabilities,
+  -- Without a project root it fails to start ("unknown scheme") on every
+  -- PHP/Blade file outside Laravel
+  workspace_required = true,
+})
+vim.lsp.enable('laravel_ls')
+
+-- Python: pyright for types/completion, ruff for linting, quick fixes and
+-- import sorting (formatting runs through conform)
+local function venv_python(root)
+  for _, dir in ipairs({ ".venv", "venv", "env" }) do
+    local python = root .. "/" .. dir .. "/bin/python"
+    if vim.uv.fs_stat(python) then
+      return python
+    end
+  end
+end
+
+vim.lsp.config('pyright', {
+  on_attach = on_attach,
+  on_init = on_init,
+  capabilities = capabilities,
+  settings = {
+    pyright = {
+      disableOrganizeImports = true, -- ruff does it
+      disableTaggedHints = true, -- "x is not accessed": ruff reports unused code
+    },
+  },
+  -- Use the project's virtualenv so its packages resolve
+  before_init = function(_, config)
+    local python = venv_python(config.root_dir or vim.fn.getcwd())
+    if python then
+      config.settings.python = vim.tbl_deep_extend("force", config.settings.python or {}, { pythonPath = python })
+    end
+  end,
+})
+vim.lsp.enable('pyright')
+
+vim.lsp.config('ruff', {
+  on_attach = function(client, bufnr)
+    client.server_capabilities.hoverProvider = false -- pyright's hover is richer
+    on_attach(client, bufnr)
+  end,
+  on_init = on_init,
+  capabilities = capabilities,
+})
+vim.lsp.enable('ruff')
 
 -- 2. Svelte Native Setup
 -- vim.lsp.config uses root_markers; lspconfig.util.root_pattern() is the old
