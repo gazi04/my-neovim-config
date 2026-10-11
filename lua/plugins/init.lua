@@ -57,6 +57,16 @@ return {
 
   { import = "nvchad.blink.lazyspec" },
 
+  -- Ctrl + h/j/k/l moves between Neovim splits and tmux panes
+  -- (keys are mapped in mappings.lua; tmux side lives in ~/.tmux.conf)
+  {
+    "christoomey/vim-tmux-navigator",
+    cmd = { "TmuxNavigateLeft", "TmuxNavigateDown", "TmuxNavigateUp", "TmuxNavigateRight" },
+    init = function()
+      vim.g.tmux_navigator_no_mappings = 1
+    end,
+  },
+
   {
     "nvim-tree/nvim-tree.lua",
     opts = {

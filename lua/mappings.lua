@@ -8,6 +8,13 @@ map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
 map("n", "<leader>z", "za", { desc = "Toggle fold" })
 
+-- Ctrl + h/j/k/l: move between Neovim splits and tmux panes (vim-tmux-navigator).
+-- Replaces NvChad's plain split switching on the same keys.
+map("n", "<C-h>", "<cmd>TmuxNavigateLeft<cr>", { desc = "Navigate left (split/tmux pane)" })
+map("n", "<C-j>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate down (split/tmux pane)" })
+map("n", "<C-k>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate up (split/tmux pane)" })
+map("n", "<C-l>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate right (split/tmux pane)" })
+
 -- Scroll up half a screen and then center the cursor
 vim.api.nvim_set_keymap('n', '<C-u>', '<C-u>zz', { noremap = true, silent = true, desc = 'Scroll Up Half Page and Center' })
 
