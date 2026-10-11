@@ -27,6 +27,7 @@ return {
         "vue-language-server",
         "pyright",
         "lua-language-server", "stylua",
+        "arduino-language-server",
       }
     }
   },
@@ -38,7 +39,7 @@ return {
     opts = {
       ensure_installed = {
         "lua", "vim", "vimdoc", "typescript", "svelte",
-        "python", "c", "cpp", "php", "phpdoc", "html", "blade",
+        "python", "c", "cpp", "arduino", "php", "phpdoc", "html", "blade",
         "vue", "javascript", "css", "scss", "json", "yaml", "xml"
       },
       highlight = {
