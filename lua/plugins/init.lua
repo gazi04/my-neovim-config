@@ -33,30 +33,24 @@ return {
 
   {
     "nvim-treesitter/nvim-treesitter",
-    branch="main",
-    init = function () 
-      vim.api.nvim_create_autocmd('FileType', { 
-        callback = function() 
-          -- Enable treesitter highlighting and disable regex syntax
-          pcall(vim.treesitter.start) 
-          -- Enable treesitter-based indentation
-          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" 
-        end, 
-      }) 
-
-      local ensureInstalled = {
+    branch = "main",
+    -- On the main branch, we pass our settings to 'opts'
+    opts = {
+      ensure_installed = {
         "lua", "vim", "vimdoc", "typescript", "svelte",
         "python", "c", "cpp", "php", "phpdoc", "html", "blade",
         "vue", "javascript", "css", "scss", "json", "yaml", "xml"
+      },
+      highlight = {
+        enable = true,
+        use_languagetree = true,
+      },
+      indent = {
+        enable = true,
       }
-      local alreadyInstalled = require('nvim-treesitter.config').get_installed()
-      local parsersToInstall = vim.iter(ensureInstalled)
-        :filter(function(parser)
-          return not vim.tbl_contains(alreadyInstalled, parser)
-        end)
-        :totable()
-      require('nvim-treesitter').install(parsersToInstall)
-    end
+    },
+    -- Lazy.nvim will automatically handle the setup under the hood 
+    -- using your 'opts' table above, without looking for the deleted configs module!
   },
   -- test new blink
   { import = "nvchad.blink.lazyspec" },
