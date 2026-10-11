@@ -29,6 +29,7 @@ return {
         "pyright", "ruff",
         "lua-language-server", "stylua",
         "arduino-language-server",
+        "debugpy", "codelldb", "php-debug-adapter", -- debug adapters (configs/dap.lua)
       }
     }
   },
@@ -56,6 +57,40 @@ return {
   },
 
   { import = "nvchad.blink.lazyspec" },
+
+  -- Debugging: nvim-dap + UI for Python (debugpy), PHP (Xdebug), C/C++ (codelldb)
+  -- Adapters and configurations live in configs/dap.lua
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      { "rcarriga/nvim-dap-ui", dependencies = { "nvim-neotest/nvim-nio" } },
+      "theHamsta/nvim-dap-virtual-text",
+      "mfussenegger/nvim-dap-python",
+    },
+    config = function()
+      require "configs.dap"
+    end,
+    keys = {
+      { "<F5>", function() require("dap").continue() end, desc = "Debug start/continue" },
+      { "<F9>", function() require("dap").toggle_breakpoint() end, desc = "Debug toggle breakpoint" },
+      { "<leader>dc", function() require("dap").continue() end, desc = "Debug start/continue" },
+      { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Debug toggle breakpoint" },
+      {
+        "<leader>dB",
+        function() require("dap").set_breakpoint(vim.fn.input "Condition: ") end,
+        desc = "Debug conditional breakpoint",
+      },
+      { "<leader>do", function() require("dap").step_over() end, desc = "Debug step over" },
+      { "<leader>di", function() require("dap").step_into() end, desc = "Debug step into" },
+      { "<leader>dO", function() require("dap").step_out() end, desc = "Debug step out" },
+      { "<leader>dl", function() require("dap").run_last() end, desc = "Debug run last" },
+      { "<leader>dt", function() require("dap").terminate() end, desc = "Debug terminate" },
+      { "<leader>du", function() require("dapui").toggle() end, desc = "Debug toggle UI" },
+      { "<leader>de", function() require("dapui").eval() end, mode = { "n", "v" }, desc = "Debug evaluate" },
+      { "<leader>dpt", function() require("dap-python").test_method() end, ft = "python", desc = "Debug test method" },
+      { "<leader>dpc", function() require("dap-python").test_class() end, ft = "python", desc = "Debug test class" },
+    },
+  },
 
   -- Ctrl + h/j/k/l moves between Neovim splits and tmux panes
   -- (keys are mapped in mappings.lua; tmux side lives in ~/.tmux.conf)
