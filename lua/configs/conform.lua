@@ -28,6 +28,8 @@ local options = {
     c = clang,
     cpp = clang,
     arduino = clang,
+
+    rust = { "rustfmt" }, -- from the Rust toolchain; reads the edition from Cargo.toml
   },
 
   -- Format on save. Toggle with :FormatToggle (all buffers) or :FormatToggle!

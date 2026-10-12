@@ -15,6 +15,12 @@ map("n", "<C-j>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate down (split/tm
 map("n", "<C-k>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate up (split/tmux pane)" })
 map("n", "<C-l>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate right (split/tmux pane)" })
 
+-- Alt + arrows: the same, and also from insert mode and the built-in terminal
+map({ "n", "i", "t" }, "<M-Left>", "<cmd>TmuxNavigateLeft<cr>", { desc = "Navigate left (split/tmux pane)" })
+map({ "n", "i", "t" }, "<M-Down>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate down (split/tmux pane)" })
+map({ "n", "i", "t" }, "<M-Up>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate up (split/tmux pane)" })
+map({ "n", "i", "t" }, "<M-Right>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate right (split/tmux pane)" })
+
 -- Scroll up half a screen and then center the cursor
 vim.api.nvim_set_keymap('n', '<C-u>', '<C-u>zz', { noremap = true, silent = true, desc = 'Scroll Up Half Page and Center' })
 

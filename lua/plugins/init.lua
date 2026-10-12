@@ -29,6 +29,7 @@ return {
         "pyright", "ruff",
         "lua-language-server", "stylua",
         "arduino-language-server",
+        "rust-analyzer",
         "debugpy", "codelldb", "php-debug-adapter", -- debug adapters (configs/dap.lua)
       }
     }
@@ -42,7 +43,8 @@ return {
       ensure_installed = {
         "lua", "vim", "vimdoc", "typescript", "svelte",
         "python", "c", "cpp", "arduino", "php", "phpdoc", "html", "blade",
-        "vue", "javascript", "css", "scss", "json", "yaml", "xml"
+        "vue", "javascript", "css", "scss", "json", "yaml", "xml",
+        "rust", "toml"
       },
       highlight = {
         enable = true,
@@ -89,6 +91,19 @@ return {
       { "<leader>de", function() require("dapui").eval() end, mode = { "n", "v" }, desc = "Debug evaluate" },
       { "<leader>dpt", function() require("dap-python").test_method() end, ft = "python", desc = "Debug test method" },
       { "<leader>dpc", function() require("dap-python").test_class() end, ft = "python", desc = "Debug test class" },
+      {
+        "<leader>drt",
+        function()
+          local dap = require "dap"
+          for _, c in ipairs(dap.configurations.rust) do
+            if c.name == "Cargo: debug test under cursor" then
+              return dap.run(c)
+            end
+          end
+        end,
+        ft = "rust",
+        desc = "Debug Rust test under cursor",
+      },
     },
   },
 

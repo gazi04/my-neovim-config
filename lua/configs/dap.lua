@@ -112,3 +112,72 @@ local c_configurations = {
 
 dap.configurations.c = c_configurations
 dap.configurations.cpp = c_configurations
+
+-- ─── Rust (codelldb) ────────────────────────────────────────────────────────
+-- Builds with cargo (debug profile) and debugs the resulting binary.
+-- `cargo_args` is e.g. { "build" } or { "test", "--no-run" }.
+local function cargo_executable(cargo_args)
+  vim.cmd "silent! wall"
+  local cmd = vim.list_extend({ "cargo" }, cargo_args)
+  vim.list_extend(cmd, { "--message-format=json" })
+  vim.notify("Running " .. table.concat(cmd, " ") .. " ...", vim.log.levels.INFO)
+  local result = vim.system(cmd, { text = true, cwd = vim.fn.getcwd() }):wait()
+
+  local exes = {}
+  for line in (result.stdout or ""):gmatch "[^\n]+" do
+    local ok, msg = pcall(vim.json.decode, line)
+    if ok and msg.reason == "compiler-artifact" and msg.executable and msg.executable ~= vim.NIL then
+      table.insert(exes, msg.executable)
+    end
+  end
+  if result.code ~= 0 or #exes == 0 then
+    vim.notify("Cargo build failed:\n" .. (result.stderr or ""), vim.log.levels.ERROR)
+    return dap.ABORT
+  end
+  if #exes == 1 then
+    return exes[1]
+  end
+  -- Several binaries (e.g. lib tests + integration tests): ask which one
+  local items = { "Pick executable:" }
+  for i, exe in ipairs(exes) do
+    items[#items + 1] = i .. ". " .. vim.fn.fnamemodify(exe, ":t")
+  end
+  local choice = vim.fn.inputlist(items)
+  return exes[choice] or dap.ABORT
+end
+
+-- Name of the function the cursor is in (the test to run)
+local function current_fn_name()
+  local line = vim.fn.search([[\v^\s*(pub\s+)?(async\s+)?fn\s+\w+]], "bcnW")
+  return line > 0 and vim.fn.getline(line):match "fn%s+([%w_]+)" or ""
+end
+
+local rust_base = {
+  type = "codelldb",
+  request = "launch",
+  cwd = "${workspaceFolder}",
+  stopOnEntry = false,
+  sourceLanguages = { "rust" }, -- Rust-aware display of Vec, String, Option, ...
+}
+
+dap.configurations.rust = {
+  vim.tbl_extend("force", rust_base, {
+    name = "Cargo: debug main binary",
+    program = function()
+      return cargo_executable { "build" }
+    end,
+    args = function()
+      return vim.split(vim.fn.input "Arguments: ", " ", { trimempty = true })
+    end,
+  }),
+  vim.tbl_extend("force", rust_base, {
+    name = "Cargo: debug test under cursor",
+    program = function()
+      return cargo_executable { "test", "--no-run" }
+    end,
+    args = function()
+      -- Test filter (substring match); --nocapture shows println! output
+      return { vim.fn.input("Test name: ", current_fn_name()), "--nocapture", "--test-threads=1" }
+    end,
+  }),
+}

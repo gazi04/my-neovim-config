@@ -99,6 +99,22 @@ vim.lsp.config('ruff', {
 })
 vim.lsp.enable('ruff')
 
+-- Rust: rust-analyzer (Mason). Std library completion / go-to-definition
+-- needs the std sources: `pacman -S rust-src`.
+vim.lsp.config('rust_analyzer', {
+  on_attach = on_attach,
+  on_init = on_init,
+  capabilities = capabilities,
+  settings = {
+    ["rust-analyzer"] = {
+      check = { command = "clippy" }, -- clippy lints on save instead of plain `cargo check`
+      cargo = { allFeatures = true },
+      procMacro = { enable = true },
+    },
+  },
+})
+vim.lsp.enable('rust_analyzer')
+
 -- 2. Svelte Native Setup
 -- vim.lsp.config uses root_markers; lspconfig.util.root_pattern() is the old
 -- root_dir signature and keeps the server from ever starting
