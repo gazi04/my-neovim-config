@@ -58,8 +58,9 @@ vim.lsp.config('laravel_ls', {
 })
 vim.lsp.enable('laravel_ls')
 
--- Python: pyright for types/completion, ruff for linting, quick fixes and
--- import sorting (formatting runs through conform)
+-- Python: pyrefly for types/completion, ruff for linting, quick fixes and
+-- import sorting (formatting runs through conform). Pyright config kept below,
+-- disabled; swap the vim.lsp.enable calls to go back.
 local function venv_python(root)
   for _, dir in ipairs({ ".venv", "venv", "env" }) do
     local python = root .. "/" .. dir .. "/bin/python"
@@ -87,11 +88,31 @@ vim.lsp.config('pyright', {
     end
   end,
 })
-vim.lsp.enable('pyright')
+-- vim.lsp.enable('pyright')
+
+vim.lsp.config('pyrefly', {
+  on_attach = on_attach,
+  on_init = on_init,
+  capabilities = capabilities,
+  on_exit = function() end, -- silence lspconfig's "exited with code" notify on every quit
+  settings = {
+    python = {
+      pyrefly = { displayTypeErrors = "force-on" }, -- type errors even without a pyrefly.toml
+    },
+  },
+  -- Same virtualenv lookup as pyright (pyrefly reads python.pythonPath)
+  before_init = function(_, config)
+    local python = venv_python(config.root_dir or vim.fn.getcwd())
+    if python then
+      config.settings.python = vim.tbl_deep_extend("force", config.settings.python or {}, { pythonPath = python })
+    end
+  end,
+})
+vim.lsp.enable('pyrefly')
 
 vim.lsp.config('ruff', {
   on_attach = function(client, bufnr)
-    client.server_capabilities.hoverProvider = false -- pyright's hover is richer
+    client.server_capabilities.hoverProvider = false -- pyrefly's hover is richer
     on_attach(client, bufnr)
   end,
   on_init = on_init,
