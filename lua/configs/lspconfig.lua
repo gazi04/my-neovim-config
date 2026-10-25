@@ -213,6 +213,11 @@ vim.lsp.config('arduino_language_server', {
   on_attach = on_attach,
   on_init = on_init,
   capabilities = arduino_capabilities,
+  -- Its sketch mapper panics ("error replacing text: Line access out of range")
+  -- when one didChange carries several ranged edits, e.g. after clang-format
+  -- rewrites the buffer on save. Full-text sync isn't implemented either, so
+  -- don't batch: send each edit in its own notification.
+  flags = { debounce_text_changes = 0 },
   cmd = function(dispatchers, config)
     local root = config.root_dir or vim.fn.getcwd()
     return vim.lsp.rpc.start({
