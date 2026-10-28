@@ -44,7 +44,7 @@ return {
         "lua", "vim", "vimdoc", "typescript", "svelte",
         "python", "c", "cpp", "arduino", "php", "phpdoc", "html", "blade",
         "vue", "javascript", "css", "scss", "json", "yaml", "xml",
-        "rust", "toml"
+        "rust", "toml", "markdown", "markdown_inline"
       },
       highlight = {
         enable = true,
@@ -148,6 +148,20 @@ return {
       multiline_threshold = 20, -- Maximum number of lines to show for a single context
       trim_scope = 'outer',     -- Which context lines to discard if `max_lines` is exceeded
       mode = 'cursor',          -- Line used to calculate context. Can be 'cursor' or 'topline'
+    },
+  },
+
+  -- Render markdown in the buffer (headings, tables, code blocks, checkboxes)
+  -- Toggle with :RenderMarkdown toggle or <leader>mr
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    opts = {
+      completions = { blink = { enabled = true } },
+    },
+    keys = {
+      { "<leader>mr", "<cmd>RenderMarkdown toggle<cr>", ft = "markdown", desc = "Markdown toggle render" },
     },
   },
 }
