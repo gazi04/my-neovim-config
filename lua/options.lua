@@ -2,6 +2,11 @@ require "nvchad.options"
 
 -- add yours here!
 
+-- Python host for remote plugins (molten-nvim). Venv has pynvim, jupyter_client,
+-- jupytext, ipykernel, cairosvg, plotly, kaleido, ... (~/.virtualenvs/neovim)
+vim.g.python3_host_prog = vim.fn.expand "~/.virtualenvs/neovim/bin/python3"
+vim.g.loaded_python3_provider = nil -- NvChad disables it; molten needs it
+
 -- local o = vim.o
 -- o.cursorlineopt ='both' -- to enable cursorline!
 
