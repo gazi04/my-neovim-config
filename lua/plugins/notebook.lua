@@ -1,6 +1,7 @@
 -- Jupyter notebooks in Neovim
---   jupytext.nvim : opens *.ipynb as Python in "percent" format (# %% cell markers),
---                   writes back to .ipynb on save
+--   jupytext.nvim : opens *.ipynb as markdown (prose rendered by render-markdown.nvim,
+--                   code in ```python blocks), writes back to .ipynb on save
+--   otter.nvim    : LSP (pyright/ruff: completion, hover, diagnostics) inside the code blocks
 --   molten-nvim   : runs code in a real Jupyter kernel, shows output inline
 --   image.nvim    : renders plots/images inline (kitty graphics protocol)
 --
@@ -11,59 +12,92 @@
 --   uv add --dev ipykernel && uv run python -m ipykernel install --user --name <project-dir-name>
 -- After first install / molten update run :UpdateRemotePlugins and restart Neovim.
 
--- Return start/end line (1-based) of the "# %%" cell under the cursor
-local function cell_range()
-  local cur = vim.api.nvim_win_get_cursor(0)[1]
+-- Code cells of the current buffer as { open, first, last, close } line numbers (1-based).
+--   markdown (notebooks): ```python fenced blocks; open/close are the fence lines
+--   python (.py scripts):  "# %%" percent cells; "# %% [markdown]" cells are skipped
+local function code_cells()
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local is_marker = function(l)
-    return l:match "^# %%" ~= nil
+  local cells = {}
+  if vim.bo.filetype == "markdown" then
+    local open
+    for i, l in ipairs(lines) do
+      if not open and l:match "^```%s*{?python" then
+        open = i
+      elseif open and l:match "^```%s*$" then
+        table.insert(cells, { open = open, first = open + 1, last = i - 1, close = i })
+        open = nil
+      end
+    end
+  else
+    local open, md = 0, false
+    local function add(stop)
+      if not md and stop >= open + 1 then
+        table.insert(cells, { open = open, first = open + 1, last = stop, close = stop })
+      end
+    end
+    for i, l in ipairs(lines) do
+      if l:match "^# %%%%" then
+        add(i - 1)
+        open, md = i, l:match "%[markdown%]" ~= nil
+      end
+    end
+    add(#lines)
   end
+  return cells
+end
 
-  local start = 1
-  for i = cur, 1, -1 do
-    if is_marker(lines[i]) then
-      start = i + 1
-      break
+local function eval_cell(c)
+  if c.first <= c.last then
+    vim.fn.MoltenEvaluateRange(c.first, c.last)
+  end
+end
+
+local function current_cell()
+  local cur = vim.api.nvim_win_get_cursor(0)[1]
+  local cells = code_cells()
+  for i, c in ipairs(cells) do
+    if cur >= c.open and cur <= c.close then
+      return c, cells[i + 1]
     end
   end
-  local stop = #lines
-  for i = cur + 1, #lines do
-    if is_marker(lines[i]) then
-      stop = i - 1
-      break
-    end
-  end
-  return start, stop
 end
 
 local function run_cell()
-  local s, e = cell_range()
-  if s <= e then
-    vim.fn.MoltenEvaluateRange(s, e)
+  local c = current_cell()
+  if c then
+    eval_cell(c)
+  else
+    vim.notify("Cursor is not in a code cell", vim.log.levels.WARN)
   end
-  return e
 end
 
 local function run_cell_and_next()
-  local e = run_cell()
-  local last = vim.api.nvim_buf_line_count(0)
-  vim.api.nvim_win_set_cursor(0, { math.min(e + 2, last), 0 })
+  local c, next_cell = current_cell()
+  if not c then
+    return run_cell()
+  end
+  eval_cell(c)
+  if next_cell then
+    vim.api.nvim_win_set_cursor(0, { next_cell.first, 0 })
+  end
 end
 
 local function run_all()
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local start = 1
-  for i, l in ipairs(lines) do
-    if l:match "^# %%" then
-      if i - 1 >= start then
-        vim.fn.MoltenEvaluateRange(start, i - 1)
-      end
-      start = i + 1
-    end
+  for _, c in ipairs(code_cells()) do
+    eval_cell(c)
   end
-  if start <= #lines then
-    vim.fn.MoltenEvaluateRange(start, #lines)
+end
+
+local function new_cell()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local c = current_cell()
+  if c then
+    row = c.close
   end
+  local cell = vim.bo.filetype == "markdown" and { "", "```python", "", "```" } or { "", "# %%", "" }
+  vim.api.nvim_buf_set_lines(0, row, row, false, cell)
+  vim.api.nvim_win_set_cursor(0, { row + 3, 0 })
+  vim.cmd "startinsert"
 end
 
 -- On opening a .ipynb: start the kernel named in its metadata and load saved outputs
@@ -102,11 +136,40 @@ return {
   {
     "GCBallesteros/jupytext.nvim",
     lazy = false, -- must hook BufReadCmd for *.ipynb before any notebook is opened
+    dependencies = { "jmbuhr/otter.nvim" },
     opts = {
-      style = "percent",
-      output_extension = "auto",
-      force_ft = nil, -- keep python filetype -> pyright/ruff/treesitter keep working
+      style = "markdown",
+      output_extension = "md",
+      force_ft = "markdown", -- render-markdown.nvim renders the markdown cells
     },
+    config = function(_, opts)
+      require("jupytext").setup(opts)
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("notebook_markdown", { clear = true }),
+        pattern = "markdown",
+        callback = function(e)
+          if not vim.api.nvim_buf_get_name(e.buf):match "%.ipynb$" then
+            return
+          end
+          -- prettier (conform, markdown) could reshape cells on save
+          vim.b[e.buf].disable_autoformat = true
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(e.buf) then
+              vim.api.nvim_buf_call(e.buf, function()
+                require("otter").activate({ "python" }, true, true, nil)
+              end)
+            end
+          end)
+        end,
+      })
+    end,
+  },
+
+  {
+    "jmbuhr/otter.nvim",
+    lazy = true,
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    opts = {},
   },
 
   {
@@ -139,7 +202,7 @@ return {
       vim.g.molten_output_win_max_height = 20
       vim.g.molten_auto_open_output = false -- show output as virtual text instead of a float
       vim.g.molten_virt_text_output = true
-      vim.g.molten_virt_lines_off_by_1 = false
+      vim.g.molten_virt_lines_off_by_1 = true -- output below the closing ``` fence
       vim.g.molten_wrap_output = true
     end,
     config = function()
@@ -181,7 +244,7 @@ return {
       { "<leader>jx", "<cmd>MoltenInterrupt<cr>", desc = "Jupyter interrupt kernel" },
       { "<leader>jR", "<cmd>MoltenRestart!<cr>", desc = "Jupyter restart kernel" },
       { "<leader>jb", "<cmd>MoltenOpenInBrowser<cr>", desc = "Jupyter open output in browser" },
-      { "<leader>jj", "o<cr># %%<cr>", desc = "Jupyter new cell below" },
+      { "<leader>jj", new_cell, desc = "Jupyter new code cell below" },
     },
   },
 }
