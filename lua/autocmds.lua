@@ -33,6 +33,17 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Python: indent with treesitter. The runtime python#GetIndent finds strings
+-- through vim syntax, which treesitter highlighting turns off, so a bracket
+-- or colon inside a string (e.g. "a: [1") breaks the indent of the lines below.
+-- nvim-treesitter's main branch ignores `indent = { enable = true }`.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  callback = function()
+    vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+  end,
+})
+
 local create_cmd = vim.api.nvim_create_user_command
 
 create_cmd("TSInstallAll", function()
