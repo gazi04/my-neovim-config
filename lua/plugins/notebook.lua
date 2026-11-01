@@ -100,6 +100,124 @@ local function new_cell()
   vim.cmd "startinsert"
 end
 
+-- Fix: inline (virtual text) images overlapped molten's "Out[n]: ✓ Done" header.
+-- molten shows a cell's output as virt_lines on one extmark, with a " " placeholder line per
+-- image, and asks image.nvim to draw the image at that same buffer line. image.nvim then adds a
+-- *second* extmark with blank padding lines. Neovim's order of virt_lines from two extmarks on
+-- one row is not fixed, so the image lands on top of molten's text (or after it, with a gap).
+-- Instead: turn image.nvim's padding off and grow molten's own extmark with blank lines after
+-- each image placeholder, then offset the image onto its placeholder (render_offset_top).
+-- Everything lives in one extmark, so the layout is deterministic. Hooks molten's Lua bridge
+-- (lua/load_image_nvim.lua); no plugin files are edited.
+local function fix_molten_image_layout()
+  local ok, bridge = pcall(require, "load_image_nvim")
+  if not ok or type(bridge) ~= "table" or bridge._layout_fixed then
+    return
+  end
+  local api = bridge.image_api
+  local images -- the bridge's private image table (upvalue of render)
+  for i = 1, 50 do
+    local name, value = debug.getupvalue(api.render, i)
+    if not name then
+      break
+    end
+    if name == "images" then
+      images = value
+      break
+    end
+  end
+  if not images then
+    return vim.notify("molten image layout fix: bridge changed, fix not applied", vim.log.levels.WARN)
+  end
+
+  local ns = vim.api.nvim_create_namespace "molten-extmarks"
+  local layouts = {} -- "buf:mark_id" -> { orig = molten's virt_lines, order = {img ids}, heights = {} }
+
+  local function is_placeholder(line)
+    return #line == 1 and line[1][1] == " "
+  end
+
+  -- Rewrite molten's extmark: original lines + (height - 1) blank lines after each placeholder.
+  -- Returns each image's 0-based row within the virt_lines.
+  local function apply(buf, mark, layout)
+    local lines, offsets, k = {}, {}, 0
+    for _, line in ipairs(layout.orig) do
+      lines[#lines + 1] = line
+      if is_placeholder(line) then
+        k = k + 1
+        local id = layout.order[k]
+        if id then
+          offsets[id] = #lines - 1
+          for _ = 2, layout.heights[id] or 1 do
+            lines[#lines + 1] = { { " ", "" } }
+          end
+        end
+      end
+    end
+    vim.api.nvim_buf_set_extmark(buf, ns, mark[2], mark[3], { id = mark[1], virt_lines = lines })
+    return offsets
+  end
+
+  local render = api.render
+  api.render = function(identifier, geometry)
+    local img = images[identifier]
+    if
+      not (img and img.buffer and img.geometry and type(img.id) == "string" and img.id:match "^virt%-")
+      or not vim.api.nvim_buf_is_valid(img.buffer)
+    then
+      return render(identifier, geometry)
+    end
+
+    local row = img.geometry.y or 0
+    local mark
+    for _, m in ipairs(vim.api.nvim_buf_get_extmarks(img.buffer, ns, { row, 0 }, { row, -1 }, { details = true })) do
+      if m[4].virt_lines then
+        mark = m
+      end
+    end
+    if not mark then
+      return render(identifier, geometry)
+    end
+
+    local key = img.buffer .. ":" .. mark[1]
+    local layout = layouts[key]
+    if not layout then
+      layout = { orig = mark[4].virt_lines, order = {}, heights = {} }
+      layouts[key] = layout
+    end
+    if not vim.tbl_contains(layout.order, identifier) then
+      table.insert(layout.order, identifier)
+    end
+
+    img.with_virtual_padding = false -- molten's extmark reserves the rows instead
+    local size_ok, size = pcall(api.image_size, identifier)
+    layout.heights[identifier] = size_ok and size.height or 1
+
+    img.render_offset_top = apply(img.buffer, mark, layout)[identifier] or #layout.orig
+    local result = render(identifier, geometry)
+
+    -- image.nvim may shrink the image to fit the window; reserve exactly what was drawn
+    local drawn = img.rendered_geometry and img.rendered_geometry.height
+    if drawn and drawn > 0 and drawn ~= layout.heights[identifier] then
+      layout.heights[identifier] = drawn
+      apply(img.buffer, mark, layout)
+    end
+    return result
+  end
+
+  -- forget layouts of wiped buffers
+  vim.api.nvim_create_autocmd("BufWipeout", {
+    callback = function(e)
+      for k in pairs(layouts) do
+        if k:match("^" .. e.buf .. ":") then
+          layouts[k] = nil
+        end
+      end
+    end,
+  })
+  bridge._layout_fixed = true
+end
+
 -- On opening a .ipynb: start the kernel named in its metadata and load saved outputs
 local function import_outputs(e)
   vim.schedule(function()
@@ -206,6 +324,7 @@ return {
       vim.g.molten_wrap_output = true
     end,
     config = function()
+      fix_molten_image_layout()
       local grp = vim.api.nvim_create_augroup("molten_ipynb", { clear = true })
 
       vim.api.nvim_create_autocmd("BufAdd", { group = grp, pattern = "*.ipynb", callback = import_outputs })

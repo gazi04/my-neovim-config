@@ -159,6 +159,11 @@ return {
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
     opts = {
       completions = { blink = { enabled = true } },
+      -- Default "hide" conceals the ``` lines (conceal_lines). That also hides molten's
+      -- cell output in notebooks (it hangs off the closing fence) and makes lines jump
+      -- when switching modes, which shifts inline images. "thin" draws over the fence lines
+      -- instead, so the layout stays the same in normal and insert mode.
+      code = { border = "thin" },
     },
     keys = {
       { "<leader>mr", "<cmd>RenderMarkdown toggle<cr>", ft = "markdown", desc = "Markdown toggle render" },
