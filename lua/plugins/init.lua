@@ -26,7 +26,7 @@ return {
         "typescript-language-server",
         "svelte-language-server",
         "vue-language-server",
-        "pyrefly", "pyright", "ruff",
+        "pyright", "ruff",
         "lua-language-server", "stylua",
         "arduino-language-server",
         "rust-analyzer",
